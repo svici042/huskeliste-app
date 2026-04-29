@@ -13,7 +13,7 @@
   max-width: 200px;
   height: auto;
   filter: drop-shadow(0 0 10px rgba(255,255,255,0.8)) drop-shadow(0 0 20px rgba(59,130,246,0.5));
-  animation: glow 2s ease-in-out infinite alternate;
+  animation: glow 2s ease-in-out infinite alternate, float 3s ease-in-out infinite;
 }
 
 @keyframes glow {
@@ -22,6 +22,15 @@
   }
   to {
     filter: drop-shadow(0 0 15px rgba(255,255,255,1)) drop-shadow(0 0 30px rgba(59,130,246,0.8));
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
   }
 }
 
