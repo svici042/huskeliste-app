@@ -3,7 +3,15 @@ import TodoItem from "./TodoItem.jsx";
 import "./App.css";
 
 function App() {
-  const [todos, setTodos] = useState([]);
+  const [todos, setTodos] = useState(() => {
+    try {
+      const saved = localStorage.getItem('huskeliste-todos');
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
   const [inputValue, setInputValue] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [lang, setLang] = useState(localStorage.getItem('huskeliste-lang') || 'lt');
@@ -42,17 +50,7 @@ function App() {
     setLang(langs[nextIndex]);
   };
 
-useEffect(() => {
-    try {
-      const savedTodos = localStorage.getItem('huskeliste-todos');
-      if (savedTodos) {
-        const parsedTodos = JSON.parse(savedTodos);
-        setTodos(Array.isArray(parsedTodos) ? parsedTodos : []);
-      }
-    } catch (e) {
-      console.error('LocalStorage load error:', e);
-    }
-  }, []);
+  // No load useEffect needed - useState initializer handles sync
 
   // Save to localStorage
   useEffect(() => {
