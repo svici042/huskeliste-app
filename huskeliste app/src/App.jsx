@@ -115,7 +115,7 @@ function App() {
           {lang.toUpperCase()}
         </button>
       </nav>
-      <img src="/Logo/LovLaus logo.png" alt="LovLaus Logo" className="logo" />
+      <img src="./Logo/LovLaus logo.png" alt="LovLaus Logo" className="logo" />
       <h1>{textMap[lang].title}</h1>
       <div className="add-todo">
         <input
