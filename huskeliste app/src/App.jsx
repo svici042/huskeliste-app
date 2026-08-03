@@ -9,6 +9,14 @@ const STORAGE_KEYS = {
 const SUPPORTED_LANGS = ["lt", "no", "en"];
 const MAX_TODO_LENGTH = 500;
 
+const createTodoId = () => {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+};
+
 const isValidTodo = (todo) =>
   todo !== null &&
   typeof todo === "object" &&
@@ -98,7 +106,7 @@ function App() {
     event?.preventDefault();
     if (inputValue.trim() === "") return;
     const newTodo = {
-      id: crypto.randomUUID(),
+      id: createTodoId(),
       text: inputValue.trim(),
       completed: false,
     };

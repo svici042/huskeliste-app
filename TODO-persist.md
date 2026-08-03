@@ -1,1 +1,0 @@
-- [x] Step 1: App.jsx useEffect - load/save + error handling ✓\n- [x] Step 2: Test reload (data persists) ✓\n\n**Persistence complete, lint warning addressed.**

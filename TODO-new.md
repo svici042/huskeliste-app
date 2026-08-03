@@ -1,1 +1,0 @@
-- [x] Step 1: Update App.jsx ✓\n- [x] Step 2: Update App.css (navbar styles) ✓
