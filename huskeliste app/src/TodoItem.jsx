@@ -1,20 +1,8 @@
 import { useState } from "react";
 
-function TodoItem({ todo, onToggle, onDelete, onUpdate, lang }) {
+function TodoItem({ todo, onToggle, onDelete, onUpdate, labels, maxLength }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
-
-  const handleToggle = () => {
-    onToggle(todo.id);
-  };
-
-  const handleDelete = () => {
-    onDelete(todo.id);
-  };
-
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
 
   const handleUpdate = () => {
     const trimmedText = editText.trim();
@@ -26,8 +14,6 @@ function TodoItem({ todo, onToggle, onDelete, onUpdate, lang }) {
     setIsEditing(false);
   };
 
-  const handleSave = handleUpdate;
-
   const handleCancel = () => {
     setEditText(todo.text);
     setIsEditing(false);
@@ -38,27 +24,35 @@ function TodoItem({ todo, onToggle, onDelete, onUpdate, lang }) {
       <input
         type="checkbox"
         checked={todo.completed}
-        onChange={handleToggle}
+        onChange={() => onToggle(todo.id)}
+        aria-label={todo.text}
       />
       {isEditing ? (
         <input
+          type="text"
           id={`edit-${todo.id}`}
           name={`edit-${todo.id}`}
           value={editText}
           onChange={(e) => setEditText(e.target.value)}
-          onBlur={handleSave}
+          onBlur={handleUpdate}
           onKeyDown={(e) => {
-            if (e.key === "Enter") handleSave();
+            if (e.key === "Enter") handleUpdate();
             if (e.key === "Escape") handleCancel();
           }}
+          maxLength={maxLength}
           autoFocus
           autoComplete="off"
         />
       ) : (
-        <span onDoubleClick={handleEdit}>{todo.text}</span>
+        <span>{todo.text}</span>
       )}
-      <button onClick={handleDelete}>
-        {lang === 'lt' ? 'Ištrinti' : lang === 'no' ? 'Slett' : 'Delete'}
+      {!isEditing && (
+        <button className="edit-button" onClick={() => setIsEditing(true)}>
+          {labels.editBtn}
+        </button>
+      )}
+      <button onClick={() => onDelete(todo.id)}>
+        {labels.deleteBtn}
       </button>
     </li>
   );

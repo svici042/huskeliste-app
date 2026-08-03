@@ -2,19 +2,44 @@ import { useState, useEffect } from "react";
 import TodoItem from "./TodoItem.jsx";
 import "./App.css";
 
+const STORAGE_KEYS = {
+  todos: "huskeliste-todos",
+  lang: "huskeliste-lang",
+};
+const SUPPORTED_LANGS = ["lt", "no", "en"];
+const MAX_TODO_LENGTH = 500;
+
+const isValidTodo = (todo) =>
+  todo !== null &&
+  typeof todo === "object" &&
+  (typeof todo.id === "string" || typeof todo.id === "number") &&
+  typeof todo.text === "string" &&
+  todo.text.trim().length > 0 &&
+  todo.text.length <= MAX_TODO_LENGTH &&
+  typeof todo.completed === "boolean";
+
+const loadTodos = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEYS.todos));
+    return Array.isArray(parsed) ? parsed.filter(isValidTodo) : [];
+  } catch {
+    return [];
+  }
+};
+
+const loadLanguage = () => {
+  try {
+    const savedLanguage = localStorage.getItem(STORAGE_KEYS.lang);
+    return SUPPORTED_LANGS.includes(savedLanguage) ? savedLanguage : "lt";
+  } catch {
+    return "lt";
+  }
+};
+
 function App() {
-  const [todos, setTodos] = useState(() => {
-    try {
-      const saved = localStorage.getItem('huskeliste-todos');
-      const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
+  const [todos, setTodos] = useState(loadTodos);
   const [inputValue, setInputValue] = useState("");
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [lang, setLang] = useState(localStorage.getItem('huskeliste-lang') || 'lt');
+  const [lang, setLang] = useState(loadLanguage);
 
   const textMap = {
     lt: {
@@ -23,7 +48,8 @@ function App() {
       addButton: 'Pridėti',
       noTasks: 'Nėra užduočių. Pridėkite pirmąją!',
       stats: 'atlikta',
-      deleteBtn: 'Ištrinti'
+      deleteBtn: 'Ištrinti',
+      editBtn: 'Redaguoti'
     },
     no: {
       title: 'Huskeliste App (Oppgaveliste)',
@@ -31,7 +57,8 @@ function App() {
       addButton: 'Legg til',
       noTasks: 'Ingen oppgaver. Legg til den første!',
       stats: 'ferdig',
-      deleteBtn: 'Slett'
+      deleteBtn: 'Slett',
+      editBtn: 'Rediger'
     },
     en: {
       title: 'To Do App',
@@ -39,51 +66,58 @@ function App() {
       addButton: 'Add',
       noTasks: 'No tasks. Add the first one!',
       stats: 'completed',
-      deleteBtn: 'Delete'
+      deleteBtn: 'Delete',
+      editBtn: 'Edit'
     }
   };
 
   const cycleLang = () => {
-    const langs = ['lt', 'no', 'en'];
-    const currentIndex = langs.indexOf(lang);
-    const nextIndex = (currentIndex + 1) % langs.length;
-    setLang(langs[nextIndex]);
+    const currentIndex = SUPPORTED_LANGS.indexOf(lang);
+    const nextIndex = (currentIndex + 1) % SUPPORTED_LANGS.length;
+    setLang(SUPPORTED_LANGS[nextIndex]);
   };
 
-  // No load useEffect needed - useState initializer handles sync
-
-  // Save to localStorage
   useEffect(() => {
-    localStorage.setItem('huskeliste-todos', JSON.stringify(todos));
+    try {
+      localStorage.setItem(STORAGE_KEYS.todos, JSON.stringify(todos));
+    } catch {
+      // The app remains usable when storage is unavailable or full.
+    }
   }, [todos]);
 
   useEffect(() => {
-    localStorage.setItem('huskeliste-lang', lang);
+    document.documentElement.lang = lang;
+    try {
+      localStorage.setItem(STORAGE_KEYS.lang, lang);
+    } catch {
+      // The selected language still works for the current session.
+    }
   }, [lang]);
 
-  const addTodo = () => {
+  const addTodo = (event) => {
+    event?.preventDefault();
     if (inputValue.trim() === "") return;
     const newTodo = {
-      id: Date.now(),
+      id: crypto.randomUUID(),
       text: inputValue.trim(),
       completed: false,
     };
-    setTodos([...todos, newTodo]);
+    setTodos((currentTodos) => [...currentTodos, newTodo]);
     setInputValue("");
   };
 
   const toggleTodo = (id) => {
-    setTodos(todos.map((todo) =>
+    setTodos((currentTodos) => currentTodos.map((todo) =>
       todo.id === id ? { ...todo, completed: !todo.completed } : todo
     ));
   };
 
   const deleteTodo = (id) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
+    setTodos((currentTodos) => currentTodos.filter((todo) => todo.id !== id));
   };
 
   const updateTodo = (id, newText) => {
-    setTodos(todos.map((todo) =>
+    setTodos((currentTodos) => currentTodos.map((todo) =>
       todo.id === id ? { ...todo, text: newText } : todo
     ));
   };
@@ -100,37 +134,25 @@ function App() {
       <div className="logo-particle"></div>
       
       <nav className="navbar">
-        <div className="hamburger" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-        <ul className={`nav-menu ${isMenuOpen ? 'open' : ''}`}>
-          <li><a href="#apie">Apie mus</a></li>
-          <li><a href="#paslaugos">Paslaugos</a></li>
-          <li><a href="#kontaktai">Kontaktai</a></li>
-          <li><a href="#lovlaus">LovLaus</a></li>
-        </ul>
-        <button className="lang-toggle" onClick={cycleLang}>
+        <button className="lang-toggle" onClick={cycleLang} aria-label="Change language">
           {lang.toUpperCase()}
         </button>
       </nav>
       <img src="./Logo/LovLaus logo.png" alt="LovLaus Logo" className="logo" />
       <h1>{textMap[lang].title}</h1>
-      <div className="add-todo">
+      <form className="add-todo" onSubmit={addTodo}>
         <input
           id="new-todo-input"
           name="new-todo"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder={textMap[lang].placeholder}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") addTodo();
-          }}
+          maxLength={MAX_TODO_LENGTH}
+          aria-label={textMap[lang].placeholder}
           autoComplete="off"
         />
-        <button onClick={addTodo}>{textMap[lang].addButton}</button>
-      </div>
+        <button type="submit">{textMap[lang].addButton}</button>
+      </form>
       <div className="stats">
         {totalCount === 0 ? (
           <p>{textMap[lang].noTasks}</p>
@@ -148,7 +170,8 @@ function App() {
             onToggle={toggleTodo}
             onDelete={deleteTodo}
             onUpdate={updateTodo}
-            lang={lang}
+            labels={textMap[lang]}
+            maxLength={MAX_TODO_LENGTH}
           />
         ))}
       </ul>
@@ -161,4 +184,3 @@ function App() {
 }
 
 export default App;
-
